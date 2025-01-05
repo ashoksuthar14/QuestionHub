@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QuestionHub - AI powered Visual Learner</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="dynamic-title">Welcome to <span>QuestionHub</span></h1>
+            <p class="subheading">AI Powered Visual Learner</p>
+        </header>
+
+        <div class="content">
+            <h2>Upload Your Problem Image</h2>
+            <form id="upload-form" method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" id="file-input" required class="upload-input">
+                <button type="submit" class="submit-btn">Upload</button>
+            </form>
+
+            <div id="image-preview-container" style="display: none;">
+                <h3>Uploaded Image Preview:</h3>
+                <img id="image-preview" alt="Preview of uploaded image" />
+            </div>
+        </div>
+
+        <div id="solution-container" class="solution-container">
+            <h3>Solution:</h3>
+            <ul id="solution-text" class="solution-text"></ul>
+            <button id="hear-solution" class="hear-solution-btn">Hear Solution</button>
+            <audio id="solution-audio" controls class="solution-audio" style="display:none;"></audio>
+        </div>
+    </div>
+
+    <script>
+        // Preview the selected image before uploading
+        const fileInput = document.getElementById('file-input');
+        const imagePreviewContainer = document.getElementById('image-preview-container');
+        const imagePreview = document.getElementById('image-preview');
+
+        fileInput.addEventListener('change', function () {
+            const file = this.files[0];
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    imagePreview.src = e.target.result;
+                    imagePreviewContainer.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreviewContainer.style.display = 'none';
+            }
+        });
+
+        document.getElementById('upload-form').onsubmit = async function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const response = await fetch('/upload', { method: 'POST', body: formData });
+            const data = await response.json();
+
+            if (data.solution) {
+                const solutionText = document.getElementById('solution-text');
+                solutionText.innerHTML = ''; // Clear any previous solutions
+
+                // Add solution points
+                data.solution.split('\n').forEach(point => {
+                    const li = document.createElement('li');
+                    li.textContent = point;
+                    solutionText.appendChild(li);
+                });
+
+                document.getElementById('solution-container').style.display = 'block';
+
+                // Set up event for playing the solution audio
+                document.getElementById('hear-solution').onclick = async function () {
+                    const audioResponse = await fetch('/speak', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ solution: data.solution }),
+                    });
+
+                    const blob = await audioResponse.blob();
+                    const audioUrl = URL.createObjectURL(blob);
+                    const audio = document.getElementById('solution-audio');
+                    audio.src = audioUrl;
+                    audio.style.display = 'block';
+                    audio.play();
+                };
+            } else {
+                alert(data.error || 'Error processing the request.');
+            }
+        };
+    </script>
+</body>
+</html>

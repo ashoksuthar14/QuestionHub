@@ -1,0 +1,10 @@
+opencv-python
+pytesseract
+gTTS
+python-dotenv
+flask
+google-cloud-vision
+google-generativeai
+gtts
+httpx
+Pillow
