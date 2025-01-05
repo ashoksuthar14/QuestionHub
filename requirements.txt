@@ -8,3 +8,4 @@ google-generativeai
 gtts
 httpx
 Pillow
+google-cloud-texttospeech
